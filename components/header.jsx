@@ -124,7 +124,7 @@ const categories = [
 const Header = async ({ isAdminPage = false }) => {
   const user = await checkUser()
   const isAdmin = user?.role === 'ADMIN'
-  const totalItems = 0 // Placeholder for cart items
+  const totalItems = 0 
 
   return (
     <nav className="bg-black text-white sticky top-0 z-50">
@@ -132,9 +132,9 @@ const Header = async ({ isAdminPage = false }) => {
         {/* Logo */}
         <Link
           href={isAdminPage ? '/admin' : '/'}
-          className="flex items-center text-4xl font-bold text-yellow-500 hover:text-yellow-400 transition-colors"
+          className="flex items-center text-4xl font-bold text-yellow-500 hover:text-yellow-400 transition-colors ml-16"
         >
-          TOKIS
+          TOKISS
           {isAdminPage && (
             <span className="ml-2 text-xs font-extralight">admin</span>
           )}

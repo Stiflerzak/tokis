@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
             href='/'
             className='text-2xl font-bold text-yellow-500 hover:text-yellow-400 transition-colors'
           >
-            TOKIS 
+            TOKIS
           </Link>
           <Header />
           <main className='min-h-screen'>{children}</main>
