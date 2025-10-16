@@ -134,7 +134,7 @@ const Header = async ({ isAdminPage = false }) => {
           href={isAdminPage ? '/admin' : '/'}
           className="flex items-center text-4xl font-bold text-yellow-500 hover:text-yellow-400 transition-colors ml-16"
         >
-          TOKISS
+          TOKIS
           {isAdminPage && (
             <span className="ml-2 text-xs font-extralight">admin</span>
           )}

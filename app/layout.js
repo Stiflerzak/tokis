@@ -20,12 +20,12 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang='en'>       
         <body className={`${inter.className}`}>
-          <Link
+          {/* <Link
             href='/'
             className='text-2xl font-bold text-yellow-500 hover:text-yellow-400 transition-colors'
           >
             TOKIS
-          </Link>
+          </Link> */}
           <Header />
           <main className='min-h-screen'>{children}</main>
           <Toaster richColors />
