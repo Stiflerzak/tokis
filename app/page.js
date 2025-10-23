@@ -37,21 +37,21 @@ export default async function Home() {
     },
   ]
 
- const carouselItems = [
+  const carouselItems = [
     ...featuredCars.map((car) => ({
       title: `${car.make} ${car.model}`,
-      description: car.description || 'Explore our latest collection of premium cars.',
-      image: car.images?.[0] || '/images/tokis.jpg', 
+      description:
+        car.description || 'Explore our latest collection of premium cars.',
+      image: car.images?.[0] || '/images/tokis.jpg',
     })),
     ...marketingCampaigns,
   ]
 
   return (
-    <div className='flex flex-col pt-20'>
+    <div className='flex flex-col'>
       {/* Hero Section with Gradient Title */}
-      <section className='relative py-16 md:py-28 flex flex-col items-center justify-center text-center'>
-        {/* 🚗 Carousel Section */}
-        <div className='w-full mt-12 px-4 md:px-12'>
+      <section className='relative flex flex-col items-center justify-center text-center mt-[2px]'>
+        <div className='w-full'>
           <FeaturedCarousel items={carouselItems} />
         </div>
       </section>
