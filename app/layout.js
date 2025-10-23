@@ -4,6 +4,8 @@ import Header from '@/components/header'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'sonner'
 import Link from 'next/link'
+import { Analytics } from "@vercel/analytics/react";
+
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -28,6 +30,7 @@ export default function RootLayout({ children }) {
               <p>Made with 💗 by Hilary Kariuki || +254 798616730 </p>
             </div>
           </footer>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
