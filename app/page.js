@@ -14,29 +14,45 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { bodyTypes, carMakes, faqItems } from '@/lib/data'
 import { CarouselOrientation } from '@/components/ui/CarouselOrientation'
+import FeaturedCarousel from '@/components/FeaturedCarousel'
 
 export default async function Home() {
   const featuredCars = await getFeaturedCars()
 
+  const marketingCampaigns = [
+    {
+      title: 'Perfumes Collection',
+      image: '/images/perfumes.jpg',
+      description: 'perfumes for every occasion.',
+    },
+    {
+      title: 'Gym Equipment',
+      image: '/images/gym.jpg',
+      description: 'Get fit with our range of home gym equipment.',
+    },
+    {
+      title: 'Hiking Gear for Adventures',
+      image: '/images/hiking.jpeg',
+      description: 'Experience the outdoors with our rugged hiking gear.',
+    },
+  ]
+
+ const carouselItems = [
+    ...featuredCars.map((car) => ({
+      title: `${car.make} ${car.model}`,
+      description: car.description || 'Explore our latest collection of premium cars.',
+      image: car.images?.[0] || '/images/tokis.jpg', 
+    })),
+    ...marketingCampaigns,
+  ]
+
   return (
     <div className='flex flex-col pt-20'>
       {/* Hero Section with Gradient Title */}
-      <section className='relative py-16 md:py-28 dotted-background'>
-        <div className='max-w-4xl mx-auto text-center'>
-          <div className='mb-8'>
-            <h1 className='text-5xl md:text-8xl mb-4 gradient-title'> 
-              Tokis - your one stop shop for all your vehicle needs              
-            </h1>
-            <p className='text-xl text-gray-500 mb-8 max-w-2xl mx-auto'>
-              From sports cars to SUVs, SUVs to luxury vehicles. We have everything you need for your next adventure.{' '}
-            </p>
+      <section className='relative py-16 md:py-28 flex flex-col items-center justify-center text-center'>
         {/* 🚗 Carousel Section */}
-        {/* <div className="mt-10 flex justify-center">
-          <CarouselOrientation/>
-        </div> */}
-          </div>
-          {/* Search Component (Client) */}
-          <HomeSearch />
+        <div className='w-full mt-12 px-4 md:px-12'>
+          <FeaturedCarousel items={carouselItems} />
         </div>
       </section>
 

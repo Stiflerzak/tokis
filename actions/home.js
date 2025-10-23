@@ -6,14 +6,28 @@ import aj from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 
 // Function to serialize car data
+// function serializeCarData(car) {
+//   return {
+//     ...car,
+//     price: car.price ? parseFloat(car.price.toString()) : 0,
+//     createdAt: car.createdAt?.toISOString(),
+//     updatedAt: car.updatedAt?.toISOString(),
+//   };
+// }
+
 function serializeCarData(car) {
   return {
     ...car,
     price: car.price ? parseFloat(car.price.toString()) : 0,
     createdAt: car.createdAt?.toISOString(),
     updatedAt: car.updatedAt?.toISOString(),
+    image:
+      car.image && car.image.trim() !== ""
+        ? car.image
+        : "/images/perfumes.jpg", 
   };
 }
+
 
 /**
  * Get featured cars for the homepage
