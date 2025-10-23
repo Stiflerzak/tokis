@@ -25,7 +25,7 @@ export default async function Home() {
         <div className='max-w-4xl mx-auto text-center'>
           <div className='mb-8'>
             <h1 className='text-5xl md:text-8xl mb-4 gradient-title'> 
-              Auto🚗Max - your one stop shop for all your vehicle needs              
+              Tokis - your one stop shop for all your vehicle needs              
             </h1>
             <p className='text-xl text-gray-500 mb-8 max-w-2xl mx-auto'>
               From sports cars to SUVs, SUVs to luxury vehicles. We have everything you need for your next adventure.{' '}
