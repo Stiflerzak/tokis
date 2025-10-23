@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { createClient } from "@/lib/supabase";
 import { auth } from "@clerk/nextjs/server";
 import { serializeCarData } from "@/lib/helpers";
+import sharp from "sharp";
 
 // Function to convert File to base64
 async function fileToBase64(file) {
@@ -18,29 +19,145 @@ async function fileToBase64(file) {
 }
 
 // Gemini AI integration for car image processing
+// export async function processCarImageWithAI(file) {
+//   try {
+//     // Check if API key is available
+//     if (!process.env.GEMINI_API_KEY) {
+//       throw new Error("Gemini API key is not configured");
+//     }
+
+//     // Initialize Gemini API
+//     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+//     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+//     // Convert image file to base64
+//     const base64Image = await fileToBase64(file);
+
+//     // Create image part for the model
+//     const imagePart = {
+//       inlineData: {
+//         data: base64Image,
+//         mimeType: file.type,
+//       },
+//     };
+
+//     // Define the prompt for car detail extraction
+//     const prompt = `
+//       Analyze this car image and extract the following information:
+//       1. Make (manufacturer)
+//       2. Model
+//       3. Year (approximately)
+//       4. Color
+//       5. Body type (SUV, Sedan, Hatchback, etc.)
+//       6. Mileage
+//       7. Fuel type (your best guess)
+//       8. Transmission type (your best guess)
+//       9. Price (your best guess)
+//       9. Short Description as to be added to a car listing
+
+//       Format your response as a clean JSON object with these fields:
+//       {
+//         "make": "",
+//         "model": "",
+//         "year": 0000,
+//         "color": "",
+//         "price": "",
+//         "mileage": "",
+//         "bodyType": "",
+//         "fuelType": "",
+//         "transmission": "",
+//         "description": "",
+//         "confidence": 0.0
+//       }
+
+//       For confidence, provide a value between 0 and 1 representing how confident you are in your overall identification.
+//       Only respond with the JSON object, nothing else.
+//     `;
+
+//     // Get response from Gemini
+//     const result = await model.generateContent([imagePart, prompt]);
+//     const response = await result.response;
+//     const text = response.text();
+//     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+
+//     // Parse the JSON response
+//     try {
+//       const carDetails = JSON.parse(cleanedText);
+
+//       // Validate the response format
+//       const requiredFields = [
+//         "make",
+//         "model",
+//         "year",
+//         "color",
+//         "bodyType",
+//         "price",
+//         "mileage",
+//         "fuelType",
+//         "transmission",
+//         "description",
+//         "confidence",
+//       ];
+
+//       const missingFields = requiredFields.filter(
+//         (field) => !(field in carDetails)
+//       );
+
+//       if (missingFields.length > 0) {
+//         throw new Error(
+//           `AI response missing required fields: ${missingFields.join(", ")}`
+//         );
+//       }
+
+//       // Return success response with data
+//       return {
+//         success: true,
+//         data: carDetails,
+//       };
+//     } catch (parseError) {
+//       console.error("Failed to parse AI response:", parseError);
+//       console.log("Raw response:", text);
+//       return {
+//         success: false,
+//         error: "Failed to parse AI response",
+//       };
+//     }
+//   } catch (error) {
+//     console.error();
+//     throw new Error("Gemini API error:" + error.message);
+//   }
+// }
+
+
 export async function processCarImageWithAI(file) {
   try {
-    // Check if API key is available
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("Gemini API key is not configured");
     }
 
-    // Initialize Gemini API
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const modelName = "gemini-2.5-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
 
-    // Convert image file to base64
-    const base64Image = await fileToBase64(file);
+    let base64Image = await fileToBase64(file);
+    let mimeType = file.type;
 
-    // Create image part for the model
+    const unsupportedFormats = ['image/avif', 'image/svg+xml', 'image/bmp', 'image/tiff'];
+    
+    if (unsupportedFormats.includes(file.type)) {
+      console.log(`Converting ${file.type} to JPEG for Gemini compatibility`);
+      const converted = await convertImageToJpeg(file);
+      base64Image = converted.base64;
+      mimeType = converted.mimeType;
+    }
+
     const imagePart = {
       inlineData: {
         data: base64Image,
-        mimeType: file.type,
+        mimeType: mimeType,
       },
     };
 
-    // Define the prompt for car detail extraction
     const prompt = `
       Analyze this car image and extract the following information:
       1. Make (manufacturer)
@@ -73,17 +190,75 @@ export async function processCarImageWithAI(file) {
       Only respond with the JSON object, nothing else.
     `;
 
-    // Get response from Gemini
-    const result = await model.generateContent([imagePart, prompt]);
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
+    const maxAttempts = 3;
+    let attempt = 0;
+    let result;
+    while (attempt < maxAttempts) {
+      try {
+        attempt += 1;
+        result = await model.generateContent([imagePart, prompt]);
+        break; 
+      } catch (genErr) {
+        const msg = String(genErr?.message || genErr);
+        const isQuotaError =
+          msg.includes("Quota exceeded") ||
+          msg.includes("generate_content_free_tier") ||
+          msg.includes("QuotaFailure") ||
+          msg.includes("generate_content_free_tier_requests");
+
+        const retryMatch = msg.match(/Please retry in\s*([0-9.]+)s/i);
+        const retrySeconds = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : null;
+
+        if (isQuotaError) {
+          if (retrySeconds) {
+            if (attempt >= maxAttempts) {
+              return {
+                success: false,
+                error:
+                  "Quota exceeded for the selected Gemini model. Please retry after " +
+                  `${retrySeconds} seconds or upgrade your quota.`,
+                retryAfter: retrySeconds,
+              };
+            }
+            await sleep(retrySeconds * 1000);
+            continue;
+          }
+
+          if (attempt < maxAttempts) {
+            const backoffMs = Math.min(30000, 1000 * 2 ** attempt);
+            await sleep(backoffMs);
+            continue;
+          }
+
+          return {
+            success: false,
+            error:
+              "Quota exceeded for the selected Gemini model (free tier). " +
+              "Please upgrade your Google Cloud quota or use a different model. See: https://ai.google.dev/gemini-api/docs/rate-limits",
+          };
+        }
+
+        throw genErr;
+      }
+    }
+
+    if (!result) {
+      return {
+        success: false,
+        error: "Failed to get response from Gemini after retries",
+      };
+    }
+
     const response = await result.response;
-    const text = response.text();
+    const text = await response.text();
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
     // Parse the JSON response
     try {
       const carDetails = JSON.parse(cleanedText);
 
-      // Validate the response format
       const requiredFields = [
         "make",
         "model",
@@ -98,17 +273,12 @@ export async function processCarImageWithAI(file) {
         "confidence",
       ];
 
-      const missingFields = requiredFields.filter(
-        (field) => !(field in carDetails)
-      );
+      const missingFields = requiredFields.filter((field) => !(field in carDetails));
 
       if (missingFields.length > 0) {
-        throw new Error(
-          `AI response missing required fields: ${missingFields.join(", ")}`
-        );
+        throw new Error(`AI response missing required fields: ${missingFields.join(", ")}`);
       }
 
-      // Return success response with data
       return {
         success: true,
         data: carDetails,
@@ -119,11 +289,38 @@ export async function processCarImageWithAI(file) {
       return {
         success: false,
         error: "Failed to parse AI response",
+        raw: text,
       };
     }
   } catch (error) {
-    console.error();
-    throw new Error("Gemini API error:" + error.message);
+    console.error("Gemini API error:", error);
+    const errMsg = String(error?.message || error);
+    if (errMsg.includes("Quota exceeded") || errMsg.includes("generate_content_free_tier")) {
+      return {
+        success: false,
+        error:
+          "Quota exceeded for the Gemini image model. Upgrade your quota or choose another model. See: https://ai.google.dev/gemini-api/docs/rate-limits",
+      };
+    }
+    throw new Error("Gemini API error:" + errMsg);
+  }
+}
+
+async function convertImageToJpeg(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const inputBuffer = Buffer.from(arrayBuffer);
+
+    // Convert to JPEG with 90% quality
+    const jpegBuffer = await sharp(inputBuffer).jpeg({ quality: 90 }).toBuffer();
+    const base64 = jpegBuffer.toString('base64');
+
+    return {
+      base64,
+      mimeType: 'image/jpeg',
+    };
+  } catch (err) {
+    throw new Error('Server-side image conversion failed: ' + (err?.message || String(err)));
   }
 }
 

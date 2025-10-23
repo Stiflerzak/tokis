@@ -2,6 +2,9 @@ import arcjet, { createMiddleware, detectBot, shield } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+
 const isProtectedRoute = createRouteMatcher([
   "/admin(.*)",
   "/saved-cars(.*)",
@@ -15,7 +18,9 @@ const aj = arcjet({
   rules: [
     // Shield protection for content and security
     shield({
-      mode: "LIVE",
+      // mode: "LIVE",
+            mode: isDev ? "DRY_RUN" : "LIVE",
+
     }),
     detectBot({
       mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
@@ -35,7 +40,6 @@ const clerk = clerkMiddleware(async (auth, req) => {
     const { redirectToSignIn } = await auth();
     return redirectToSignIn();
   }
-
   return NextResponse.next();
 });
 

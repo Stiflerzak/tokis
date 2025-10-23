@@ -9,6 +9,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "imaawvvwxvlyknuvwnzh.supabase.co",
       },
+       {
+        protocol: "https",
+        hostname: "xjyebvxpqwfgcpwvtgcg.supabase.co",
+      },
     ],
   },
 
@@ -19,7 +23,7 @@ const nextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "frame-src 'self' https://roadsidecoder.created.app;",
+            value: "frame-src 'self' https://hilarykariuki.vercel.app/;",
           },
         ],
       },
