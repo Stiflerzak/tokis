@@ -13,8 +13,8 @@ import { HomeSearch } from '@/components/home-search'
 import Link from 'next/link'
 import Image from 'next/image'
 import { bodyTypes, carMakes, faqItems } from '@/lib/data'
-import { CarouselOrientation } from '@/components/ui/CarouselOrientation'
 import FeaturedCarousel from '@/components/FeaturedCarousel'
+import OfferSlider from '@/components/OfferSlider'
 
 export default async function Home() {
   const featuredCars = await getFeaturedCars()
@@ -51,6 +51,8 @@ export default async function Home() {
     <div className='flex flex-col'>
       {/* Hero Section with Gradient Title */}
       <section className='relative flex flex-col items-center justify-center text-center mt-[2px]'>
+        <OfferSlider/>
+
         <div className='w-full'>
           <FeaturedCarousel items={carouselItems} />
         </div>
